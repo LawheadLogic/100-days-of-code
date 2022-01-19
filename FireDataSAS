@@ -1,0 +1,20 @@
+*Importing Data from a CSV*;
+OPTIONS VALIDVarname=v7;
+proc import datafile='/home/u57417930/EPG1V2/data/Fire_Calls_for_Service_Types_by_Month.csv'
+	out=FireCalls
+	dbms=csv
+	replace;
+run;
+
+
+*Printing the basic file from work directory*;
+proc print data=FireCalls;
+run;
+
+proc univariate data=FireCalls;
+run;
+
+*Showing the types of calls received*;
+Proc freq data=FireCalls;
+	table Call_Type_Description;
+RUN;
