@@ -1,0 +1,104 @@
+***********************************************************;
+*  SUSAN LAWHEAD                                  		  *;
+*  #100 DaysOfCode Day 2		                          *;
+*  Lesson #4, Preparing Data							  *;
+*     									                  *;
+***********************************************************;
+
+*setting primary library;
+libname pg1 '/home/u57417930/EPG1V2/data';
+*setting new output library to save permanent outputs;
+libname out '/home/u57417930/EPG1V2/output';
+
+*practicing where and keep in the data statement. Had to remind myself how to use DATES in where statement;
+DATA out.storm_cat5;
+	set pg1.storm_summary;
+	WHERE MaxWindMPH >= 156 AND StartDate >= '01JAN2000'd;
+	KEEP Season Basin Name Type MaxWindMPH;
+RUN;
+
+*reviewing data from eu_occ;
+proc contents data=pg1.eu_occ;
+run;
+
+*modifying data for Level 1 practice;
+DATA out.eu_occ2016;
+	set pg1.eu_occ;
+	WHERE YearMon LIKE '2016%';
+	*After looking at results, I realize I could just list the three columns and then apply the format once;
+	*FORMAT Hotel Comma17. ShortStay Comma17. Camp Comma17.;
+	FORMAT Hotel ShortStay Camp Comma17.;
+	DROP Geo;
+RUN;
+
+*Level 2 practice;
+DATA out.fox;
+	set pg1.np_species;
+	*WHERE Category LIKE 'Mammal' and upcase(Common_Names) LIKE upcase('%Fox%');
+	WHERE Category LIKE 'Mammal' and upcase(Common_Names) LIKE upcase('%Fox%') AND upcase(Common_Names) NOT LIKE upcase('%Squirrel%');
+	DROP Category Record_Status Occurrence Nativeness;
+RUN;
+
+*Adds a sort statement;
+proc sort data=out.fox;
+	BY Common_Names;
+RUN;
+
+*Challenge Level Practice;
+%let Category= Bird;
+DATA &Category;
+	set pg1.np_species;
+	WHERE Category = "&Category";
+	DROP Abundance Seasonality Conservation_Status;
+RUN;
+
+proc freq data=&category;
+	TABLE Record_Status;
+RUN;
+
+*Creating a new column;
+data storm_length;
+	set pg1.storm_summary;
+	drop Hem_EW Hem_NS Lat Lon;
+	*Add assignment statement;
+	StormLength=EndDate-StartDate;
+run;
+
+*new columns with functions;
+data storm_wingavg;
+	set pg1.storm_range;
+	*Add assignment statements;
+	WindAvg=mean(wind1,wind2,wind3,wind4);
+	WindRange=range(wind1,wind2,wind3,wind4);
+	*learned shorthand of range(wind1-wind4);
+run;
+
+*Where statement including a substring function;
+data pacific;
+	set pg1.storm_summary;
+	drop Type Hem_EW Hem_NS MinPressure Lat Lon;
+	*Add a WHERE statement that uses the SUBSTR function;
+	WHERE upcase(substr(Basin, 2, 1))='P';
+run;
+
+*Level 1 practice;
+data np_summary_update;
+	set pg1.np_summary;
+	keep Reg ParkName DayVisits OtherLodging Acres SqMiles Camping;	
+	*Add assignment statements;
+	SqMiles=Acres*.0015625;
+	Camping=sum(OtherCamping, TentCampers, RVCampers, BackCountryCampers);
+	FORMAT SqMiles Camping Comma17.;
+run;
+
+*Level 2 Practice;
+data out.eu_occ_total;
+	set pg1.eu_occ;
+	Year= substr(YearMon, 1, 4);
+	Month=substr(YearMon, 6, 2);
+	ReportDate= MDY(Month, 1, Year);
+	Total=sum(camp, hotel, shortstay);
+	FORMAT Hotel ShortStay Camp Total commma17. ReportDate monyy7.;
+	KEEP Country Hotel ShortStay Camp ReportDate Total;
+RUN;
+*I started rushing on this one some and struggled, not with the concepts, but with the actual syntax such as putting Year Month Day in the reportdate column;
