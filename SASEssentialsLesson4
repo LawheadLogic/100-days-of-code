@@ -102,3 +102,108 @@ data out.eu_occ_total;
 	KEEP Country Hotel ShortStay Camp ReportDate Total;
 RUN;
 *I started rushing on this one some and struggled, not with the concepts, but with the actual syntax such as putting Year Month Day in the reportdate column;
+
+*Challenge Practice;
+data out.np_summary2;
+	set pg1.np_summary;
+	ParkType=SCAN(ParkName, -1);
+	KEEP Reg Type ParkName ParkType;
+RUN;
+*So it appears the -1 indicates the scan should go back to the first delimiter, or space, not just to the last character. Need to do more research here:
+
+*If/Then/Else Practice- Learned that missing doesn't show up in the frequency table the same way;
+data storm_cat;
+	set pg1.storm_summary;
+	keep Name Basin MinPressure StartDate PressureGroup;
+	*add ELSE keyword and remove final condition;
+	if MinPressure=. then PressureGroup=.;
+	else if MinPressure<=920 then PressureGroup=1;
+	else PressureGroup=0;
+run;
+
+proc freq data=storm_cat;
+	tables PressureGroup;
+run;
+
+*Practicing LENGTH, Changing cases. It does matter where the LENGTH statement is- needs to be before if/else;
+data storm_summary2;
+	set pg1.storm_summary;
+	*Add a LENGTH statement;
+	LENGTH Ocean$8;
+	keep Basin Season Name MaxWindMPH Ocean;
+	*Add assignment statement;
+	Basin=UPCASE(Basin);
+	OceanCode=substr(Basin,2,1);
+	if OceanCode="I" then Ocean="Indian";
+	else if OceanCode="A" then Ocean="Atlantic";
+	else Ocean="Pacific";
+run;
+
+*If/Then/Do Activity practice;
+*Original code failed. Why did it fail? What do you need to do to fix it?;
+data front rear;
+    set sashelp.cars;
+    if DriveTrain="Front" then do;
+        DriveTrain="FWD";
+        output front;
+    end; *added;
+    else if DriveTrain='Rear' then do;
+        DriveTrain="RWD";
+        output rear;
+    end; *added;
+run;
+
+*Level 1 practice;
+data park_type;
+	set pg1.np_summary;
+	*Add IF-THEN-ELSE statements;
+	LENGTH ParkType$8;
+	IF Type='NM' then ParkType='Monument';
+	ELSE IF Type='NP' then ParkType = 'Park';
+	ELSE IF Type ='NPRE' then ParkType = 'Preserve';
+	ELSE IF Type ='PRE' then ParkType = 'Preserve';
+	ELSE IF Type ='PRESERVE' then ParkType = 'Preserve';
+	*Learned I can use else if Type IN ('NPRE', 'PRE', 'PRESERVE');
+	ELSE IF Type ='NS' then ParkType = 'Seashore';
+	ELSE IF Type ='RVR' then ParkType = 'River';
+	ELSE IF Type ='RIVERWAYS' then ParkType = 'River';
+run;
+
+proc freq data=park_type;
+	tables ParkType;
+run;
+
+*Level 2 practice;
+data parks monuments;
+	set pg1.np_summary;
+	WHERE Type='NP' OR TYPE='NM';
+	Campers=sum(OtherCamping, TentCampers, RVCampers, BackCountryCampers);
+	if Type='NP' then do;
+		ParkType='Park';
+		output parks;
+	end;
+	else if Type='NM' then do;
+		ParkType='Monument';
+		output monuments;
+	end;
+	KEEP Reg ParkName DayVisits OtherLodging Campers ParkType;
+RUN;
+
+*Challenge level, select when;
+data parks monuments;
+	set pg1.np_summary;
+	WHERE Type='NP' OR TYPE='NM';
+	Campers=sum(OtherCamping, TentCampers, RVCampers, BackCountryCampers);
+	LENGTH ParkType$8;
+	select(Type);
+		when('NP') do;
+			ParkType='Park';
+			output parks;
+			end;
+		otherwise do;
+			ParkType='Monument';
+			output monuments;
+			end;
+	end;
+	KEEP Reg ParkName DayVisits OtherLodging Campers ParkType;
+RUN;
