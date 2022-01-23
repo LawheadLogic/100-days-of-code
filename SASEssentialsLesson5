@@ -1,0 +1,94 @@
+***********************************************************;
+*  SUSAN LAWHEAD                                  		  *;
+*  #100 DaysOfCode Day 4		                          *;
+*  Lesson #5, Analyzing and Reporting on Data			  *;
+*     									                  *;
+***********************************************************;
+
+*setting primary library;
+libname pg1 '/home/u57417930/EPG1V2/data';
+*setting new output library to save permanent outputs;
+libname out '/home/u57417930/EPG1V2/output';
+
+*Learning to set a title for the entire report, as well as titles for specific charts;
+title "Storm Analysis";
+title2 "Summary Statistics for MaxWind and MinPressure";
+proc means data=pg1.storm_final;
+	var MaxWindMPH MinPressure;
+run;
+Title2 "Frequency Report for Basin";
+proc freq data=pg1.storm_final;
+	tables BasinName;
+run;
+
+*updating labels to provide clearer descriptors;
+data cars_update;
+    set sashelp.cars;
+	keep Make Model MSRP Invoice AvgMPG;
+	AvgMPG=mean(MPG_Highway, MPG_City);
+	label MSRP="Manufacturer Suggested Retail Price"
+          AvgMPG="Average Miles per Gallon"
+          Invoice="Invoice Price";
+run;
+
+proc means data=cars_update min mean max;
+    var MSRP Invoice;
+run;
+
+proc print data=cars_update label;
+    var Make Model MSRP Invoice AvgMPG;
+run;
+
+*Level 1 Challenge, creating one-way frequency reports;
+Title "Categories of Reported Species";
+proc freq data=pg1.np_species order=freq;
+	TABLES Category /nocum;
+RUN;
+*modification;
+Title "Categories of Reported Species";
+ods graphics on;
+ods noproctitle;
+Title2 'In the Everglades';
+proc freq data=pg1.np_species order=freq;
+	TABLES Category /nocum;
+	WHERE Species_ID LIKE 'EVER%' AND Category ^= 'Vascular Plant';
+RUN;
+
+*Level 2 Challenge, Two-Way Frequency;
+Title 'Park Types by Region';
+PROC FREQ data=pg1.np_codelookup order=freq;
+	TABLES Type*Region/ nocol;
+	WHERE Type NOT LIKE '%Other%';
+RUN;
+*modified;
+Title 'Park Types by Region';
+PROC FREQ data=pg1.np_codelookup order=freq;
+	TABLES Type*Region/ crosslist nocol plots=freqplot(orient=horizontal scale=percent groupby=row);
+	WHERE Type in('National Historic Site', 'National Monument', 'National Park');
+RUN;
+
+*Challenge accepted!;
+title1 'Counts of Selected Park Types by Park Region';
+ods graphics on;
+proc freq data=pg1.np_codelookup order=freq;
+	tables Type*Region / crosslist plots=freqplot(twoway=stacked orient=horizontal);
+	where type in ('National Historic Site', 'National Monument', 'National Park');
+run;
+
+/*part b*/
+title1 'Counts of Selected Park Types by Park Region';
+proc sgplot data=pg1.np_codelookup;
+    where Type in ('National Historic Site', 'National Monument', 'National Park');
+    hbar region / group=type;
+    keylegend / opaque across=1 position=bottomright location=inside;
+    xaxis grid;
+run;
+
+/*updates*/
+title1 'Counts of Selected Park Types by Park Region';
+proc sgplot data=pg1.np_codelookup;
+    where Type in ('National Historic Site', 'National Monument', 'National Park');
+    hbar region / group=type seglabel transparency=.50 dataskin=gloss;
+    keylegend / opaque across=1 position=bottomright location=inside;
+    xaxis grid;
+run;
