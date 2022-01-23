@@ -19,3 +19,9 @@
 **Today's Progress**: Finished Lesson 4 and took the quiz
 
 **Thoughts:** I really enjoyed working with the conditional processings statements in sas. The If/Then/Do or the Select/Where are huge to be able to split out data and analyze it. I am excited to apply that to the fire data tomorrow to start looking at the different types of calls and potentially start combining some of the calls.
+
+### Day 4: January 22, 2022
+
+**Today's Progress**: Started Lesson 5, started to get into plotting
+
+**Thoughts:** Today was fun. It is the beginning of actually building reports with graphics. I am excited to start working on my own data set to apply all of this. The goal is to finish the SAS Programming 1 course, and then apply everything I learned on 1-2 datasets.
